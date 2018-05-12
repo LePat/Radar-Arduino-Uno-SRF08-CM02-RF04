@@ -9,11 +9,18 @@ import java.io.OutputStream;
 import java.util.Enumeration;
 
 import javafx.application.Platform;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXML;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
@@ -37,6 +44,10 @@ public class ConsoleController {
 	@FXML TextField commandField1;
 	@FXML TextField commandField2;
 	@FXML TextArea consoleTextArea;
+	@FXML Button connectButton;
+	BooleanProperty connectValue = new SimpleBooleanProperty(false);
+	@FXML Button playButton;
+	BooleanProperty playValue = new SimpleBooleanProperty(false);
 	
 	// Valeurs du radar
 	@FXML Line sonde;
@@ -58,7 +69,55 @@ public class ConsoleController {
 
 	@FXML
 	public void initialize() {
+		// initialize communication
 		initSerialComm();
+		
+		//========================
+		// initialize Command Tab
+		//========================
+		// bouton connect
+		connectValue.addListener(new ChangeListener<Boolean>() {
+			@Override
+			public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
+				if (newValue) {
+					// TODO lancer la connection et activer le bouton play
+					connectButton.setText("Disconnect");
+					connectButton.setGraphic(new ImageView(new Image(getClass().getResourceAsStream("/icons/plugin_dis_obj.png"))));
+					playButton.setDisable(false);
+				} else {
+					// TODO stopper le balayage, désactiver le bouton play et arrêter la connection
+					playValue.set(false);
+					connectButton.setText("Connect");
+					connectButton.setGraphic(new ImageView(new Image(getClass().getResourceAsStream("/icons/plugin_obj.png"))));
+					playButton.setDisable(true);
+				}
+			}
+		});
+		connectButton.setGraphic(new ImageView(new Image(getClass().getResourceAsStream("/icons/plugin_obj.png"))));
+		
+		// bouton play
+		playValue.addListener(new ChangeListener<Boolean>() {
+			@Override
+			public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
+				if (newValue) {
+					// TODO démarrer le balayage si le radar embarqué est connecté (pas possible sinon normalement)
+					playButton.setText("Stop");
+					playButton.setGraphic(new ImageView(new Image(getClass().getResourceAsStream("/icons/stop_16.png"))));
+				} else {
+					// TODO arrêter le balayage
+					playButton.setText("Play");
+					playButton.setGraphic(new ImageView(new Image(getClass().getResourceAsStream("/icons/launch_16.png"))));
+				}
+			}
+		});
+		playButton.setGraphic(new ImageView(new Image(getClass().getResourceAsStream("/icons/launch_16.png"))));
+		playButton.setDisable(!connectValue.getValue());
+		
+		// bouton connected
+
+		//========================
+		// initialize Radar Tab
+		//========================
 		diagonale1.setStartX(350.0);
 		diagonale1.setStartY(350.0);
 		diagonale1.setEndX(700.0);
@@ -75,7 +134,8 @@ public class ConsoleController {
 		sonde.setEndY(350.0);
 		sonde.getTransforms().add(new Rotate(-initialAngle, 350.0, 350.0));
 		
-		
+		// FIXME Démarrage du balayage, cette activité n'a plus lieu d'être car le balayage sera
+		// fait en fonction des valeurs retournées par le radar embarqué
 		Thread balayage = new Thread() {
 			@Override
 			public void run() {
@@ -156,6 +216,16 @@ public class ConsoleController {
 	@FXML
 	private void handleClearLog(MouseEvent event) {
 		consoleTextArea.clear();
+	}
+	
+	@FXML
+	private void handleButtonConnectClicked(MouseEvent event) {
+		connectValue.setValue(!connectValue.getValue());
+	}
+	
+	@FXML
+	private void handleButtonPlayClicked(MouseEvent event) {
+		playValue.setValue(!playValue.getValue());
 	}
 
 	private void sendCommand(TextField commandField) {
@@ -257,8 +327,7 @@ public class ConsoleController {
 						try {
 							Thread.sleep(100);
 						} catch (InterruptedException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
+							consoleTextArea.appendText(e.getMessage() + "\n");
 						}
 						cercleAEffacer.setRadius(i);
 					} else {

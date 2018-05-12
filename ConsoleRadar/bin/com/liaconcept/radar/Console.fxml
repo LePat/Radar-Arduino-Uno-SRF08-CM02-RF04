@@ -43,8 +43,8 @@
                                                 <Button mnemonicParsing="false" onMouseClicked="#handleClearLog" text="Clear log" />
                                              </children>
                                           </HBox>
-                                          <Button mnemonicParsing="false" prefHeight="60.0" prefWidth="146.0" text="Play" GridPane.columnIndex="2" GridPane.rowSpan="2" />
-                                          <Button mnemonicParsing="false" prefHeight="60.0" prefWidth="131.0" text="Stop" GridPane.columnIndex="3" GridPane.rowSpan="2" />
+                                          <Button id="playButton" fx:id="playButton" contentDisplay="RIGHT" mnemonicParsing="false" onMouseClicked="#handleButtonPlayClicked" prefHeight="60.0" prefWidth="146.0" text="Play" GridPane.columnIndex="3" GridPane.rowSpan="2" />
+                                          <Button id="connectButton" fx:id="connectButton" contentDisplay="RIGHT" mnemonicParsing="false" onMouseClicked="#handleButtonConnectClicked" prefHeight="60.0" prefWidth="146.0" text="Connect" GridPane.columnIndex="2" GridPane.rowSpan="2" />
                                        </children>
                                     </GridPane>
                                  </children>
