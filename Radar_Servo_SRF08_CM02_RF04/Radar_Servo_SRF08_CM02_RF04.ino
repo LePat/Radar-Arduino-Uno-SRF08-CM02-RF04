@@ -7,13 +7,15 @@
 Servo myservo;  // create servo object to control a servo
 
 bool play = false;
-int pos = 0;    // variable to store the servo position
+int pos = 10;    // variable to store the servo position
+int pasAngle = 6;    // pas de l'angle
 int reading = 0; // lecture de la réponse du SRF08
 int ledPin =  LED_BUILTIN; // 13
 
 void setup() {
   Wire.begin(8);                // join i2c bus with address #8
   Wire.onRequest(requestEvent); // register event
+  Wire.onReceive(receiveEvent);
   Serial.begin(9600);          // start serial communication at 9600bps
   // initialize digital pin LED_BUILTIN as an output.
   pinMode(ledPin, OUTPUT);
@@ -21,32 +23,86 @@ void setup() {
 }
 
 void loop() {
-  if (play) {
+  // =============================
+  // partie scanner, radar actif
+  // =============================
+  if (play) { // si radar actif alors scanner
     digitalWrite(ledPin, HIGH);   // turn the LED on (HIGH is the voltage level)
-    for (pos = 10; pos <= 170; pos += 6) { // goes from 0 degrees to 180 degrees
+    // repart de la dernière position connue (l'indice de la boucle n'est pas réinitialisé
+    for (; pos <= 170; pos += pasAngle) { // goes from 10 degrees to 170 degrees
+      if (!play) { // si radar stopper alors quitter la boucle de scan
+        break;
+      }
       getRange();
+      if (pos <= (90 + pasAngle / 2) && pos >= (90 - pasAngle / 2)) { // envoyer la distance mesurée lorsque le capteur est droit
+        Serial.println(reading);
+      }
       myservo.write(pos);              // tell servo to go to position in variable 'pos'
       delay(15);                       // waits 15ms for the servo to reach the position
     }
+  }
+  if (play) { // si radar actif alors scanner
     digitalWrite(ledPin, LOW);
-    for (pos = 170; pos >= 10; pos -= 6) { // goes from 180 degrees to 0 degrees
+    for (; pos >= 10; pos -= pasAngle) { // goes from 170 degrees to 10 degrees
+      if (!play) { // si radar stopper alors quitter la boucle de scan
+        break;
+      }
       getRange();
+      if (pos <= (90 + pasAngle / 2) && pos >= (90 - pasAngle / 2)) { // envoyer la distance mesurée lorsque le capteur est droit
+        Serial.println(reading);
+      }
       myservo.write(pos);              // tell servo to go to position in variable 'pos'
       delay(15);                       // waits 15ms for the servo to reach the position
     }
-  } else {
+  }
+  
+  // =============================
+  // partie attente, radar inactif
+  // =============================
+  if (!play) { // si radar à l'arrêt alors attendre
     digitalWrite(ledPin, HIGH);   // turn the LED on (HIGH is the voltage level)
-    delay(500);
+    for (int i = 0; i < 5; i++) {
+      if (play) { // si démarrer le radar alors quitter la boucle d'attente
+        break;
+      }
+      delay(100);
+    }
+  }
+  if (!play) { // si radar à l'arrêt alors attendre
     digitalWrite(ledPin, LOW);   // turn the LED on (HIGH is the voltage level)
-    delay(5000);
+    for (int i = 0; i < 50; i++) {
+      if (play) { // si démarrer le radar alors quitter la boucle d'attente
+        break;
+      }
+      delay(100);
+    }
   }
 }
 
 // function that executes whenever data is requested by master
 // this function is registered as an event, see setup()
 void requestEvent() {
-  Serial.println("requestEvent");   // print the reading
+  Serial.println("requestEvent");
   Wire.write(reading); // retourne la dernière valeur mesurée as expected by master
+  Wire.write(pos); // retourne la dernière valeur mesurée as expected by master
+}
+
+void receiveEvent(int nbBytes) {
+  Serial.println("receiveEvent");
+  for (int i = 0; i < nbBytes; i++) {
+    byte octet = Wire.read();
+    Serial.println(octet);
+    switch (octet) {
+      case 0x00:
+        Serial.println("Off");
+        play = false;
+        break;
+      case 0x01:
+        Serial.println("On");
+        play = true;
+        break;
+    }
+  }
 }
 
 void getRange() {
@@ -76,7 +132,7 @@ void getRange() {
     reading = Wire.read();  // receive high byte (overwrites previous reading)
     reading = reading << 8;    // shift high byte to be high 8 bits
     reading |= Wire.read(); // receive low byte as lower 8 bits
-    Serial.println(reading);   // print the reading
+    //Serial.println(reading);   // print the reading
   }
 
   //delay(250);                  // wait a bit since people have to read the output :)
