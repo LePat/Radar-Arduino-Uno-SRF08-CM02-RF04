@@ -17,15 +17,15 @@ void setup() {
   Wire.begin(8);                // join i2c bus with address #8
   Wire.onRequest(requestEvent); // register event
   Wire.onReceive(receiveEvent); // register event
-  Serial.begin(9600);          // start serial communication at 9600bps
+//  Serial.begin(9600);          // start serial communication at 9600bps
   // initialize digital pin LED_BUILTIN as an output.
   pinMode(ledPin, OUTPUT);
   myservo.attach(9);  // attaches the servo on pin 9 to the servo object
+  // range au moins une fois
+  getRange();
 }
 
 void loop() {
-  // range au moins une fois
-  getRange();
   // =============================
   // partie scanner, radar actif
   // =============================
@@ -38,7 +38,7 @@ void loop() {
       }
       getRange();
       if (pos <= (90 + pasAngle / 2) && pos >= (90 - pasAngle / 2)) { // envoyer la distance mesurée lorsque le capteur est droit
-        Serial.println(reading);
+//        Serial.println(reading);
       }
       myservo.write(pos);              // tell servo to go to position in variable 'pos'
       delay(15);                       // waits 15ms for the servo to reach the position
@@ -52,7 +52,7 @@ void loop() {
       }
       getRange();
       if (pos <= (90 + pasAngle / 2) && pos >= (90 - pasAngle / 2)) { // envoyer la distance mesurée lorsque le capteur est droit
-        Serial.println(reading);
+//        Serial.println(reading);
       }
       myservo.write(pos);              // tell servo to go to position in variable 'pos'
       delay(15);                       // waits 15ms for the servo to reach the position
@@ -64,20 +64,20 @@ void loop() {
   // =============================
   if (!play) { // si radar à l'arrêt alors attendre
     digitalWrite(ledPin, HIGH);   // turn the LED on (HIGH is the voltage level)
-    for (int i = 0; i < 5; i++) {
-      if (play) { // si démarrer le radar alors quitter la boucle d'attente
-        break;
-      }
-      delay(100);
-    }
-  }
-  if (!play) { // si radar à l'arrêt alors attendre
-    digitalWrite(ledPin, LOW);   // turn the LED on (HIGH is the voltage level)
     for (int i = 0; i < 50; i++) {
       if (play) { // si démarrer le radar alors quitter la boucle d'attente
         break;
       }
-      delay(100);
+      delay(10);
+    }
+  }
+  if (!play) { // si radar à l'arrêt alors attendre
+    digitalWrite(ledPin, LOW);   // turn the LED on (HIGH is the voltage level)
+    for (int i = 0; i < 500; i++) {
+      if (play) { // si démarrer le radar alors quitter la boucle d'attente
+        break;
+      }
+      delay(10);
     }
   }
 }
@@ -102,22 +102,22 @@ void requestEvent() {
       Wire.write("Pong");
       break;
   }
-  Serial.println("requestEvent");
-  Serial.println(command);
+//  Serial.println("requestEvent");
+//  Serial.println(command);
 }
 
 // function that executes whenever data is received from master
 // this function is registered as an event, see setup()
 void receiveEvent(int nbBytes) {
   command = Wire.read();
-  Serial.println("receiveEvent");
-  Serial.println(nbBytes);
-  Serial.println(command);
+//  Serial.println("receiveEvent");
+//  Serial.println(nbBytes);
+//  Serial.println(command);
 }
 
 void getRange() {
   // step 1: instruct sensor to read echoes
-  Wire.beginTransmission(112); // transmit to device #112 (0x70)
+  Wire.beginTransmission(112); // transmit to device #112 (0xE0 >> 2)
   // the address specified in the datasheet is 224 (0xE0)
   // but i2c adressing uses the high 7 bits so it's 112
   Wire.write(byte(0x00));      // sets register pointer to the command register (0x00)
