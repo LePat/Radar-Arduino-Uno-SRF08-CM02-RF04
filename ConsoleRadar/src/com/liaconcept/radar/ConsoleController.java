@@ -6,6 +6,7 @@ package com.liaconcept.radar;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.util.Enumeration;
 
 import javafx.application.Platform;
@@ -214,6 +215,7 @@ public class ConsoleController {
 	private void closeSerialComm() {
 		if (serialPort != null) {
 			serialPort.close();
+			serialPort = null;
 		}
 	}
 	
@@ -247,6 +249,11 @@ public class ConsoleController {
 	}
 	
 	@FXML
+	private void handlePing(MouseEvent event) {
+		sendPingCommand();
+	}
+	
+	@FXML
 	private void handleButtonConnectClicked(MouseEvent event) {
 		connectValue.setValue(!connectValue.getValue());
 	}
@@ -261,6 +268,7 @@ public class ConsoleController {
 			if (serialPort != null) {
 				rf04 = serialPort.getOutputStream();
 				rf04.write(new byte[] { 85, (byte) (adressArduino * 2 + 1), 1, 1}, 0, 4);
+				readResponse();
 			}
 		} catch(IOException e) {
 			consoleTextArea.appendText("Exception: " + e.getMessage() + "\n");
@@ -272,6 +280,19 @@ public class ConsoleController {
 			if (serialPort != null) {
 				rf04 = serialPort.getOutputStream();
 				rf04.write(new byte[] { 85, (byte) (adressArduino * 2 + 1), 0, 1}, 0, 4);
+				readResponse();
+			}
+		} catch(IOException e) {
+			consoleTextArea.appendText("Exception: " + e.getMessage() + "\n");
+		}
+	}
+	
+	private void sendPingCommand() {
+		try {
+			if (serialPort != null) {
+				rf04 = serialPort.getOutputStream();
+				rf04.write(new byte[] { 85, (byte) (adressArduino * 2 + 1), 3, 4}, 0, 4);
+				readResponse();
 			}
 		} catch(IOException e) {
 			consoleTextArea.appendText("Exception: " + e.getMessage() + "\n");
@@ -283,33 +304,43 @@ public class ConsoleController {
 		byte[] b = new byte[commandes.length];
 		int i = 0;
 		for(; i < commandes.length; i++) {
-			b[i] = Byte.parseByte(commandes[i]);
+			b[i] = (byte) Integer.parseInt(commandes[i]);
 		}
 		consoleTextArea.appendText("Commande envoyée: " + commandField.getText().getBytes() + "\n");
 		try {
 			if (serialPort != null) {
 				rf04 = serialPort.getOutputStream();
 				rf04.write(b, 0, i);
-				InputStream cm02 = serialPort.getInputStream();
-				String reponse = "";
-				byte[] response = new byte[1];
-				Thread.sleep(100);
-				while(cm02.available() != 0) {
-					cm02.read(response);
-					consoleTextArea.appendText("brut: " + response[0] + ", Byte: " + Byte.toString(response[0]));
-					reponse += new String(response, "ASCII");
-					Thread.sleep(100);
-				}
-				consoleTextArea.appendText("\n");
-				consoleTextArea.appendText("String: " + reponse);
-				consoleTextArea.appendText("\n");
+				readResponse();
 			} else {
 				consoleTextArea.appendText("Port disconnected" + "\n");
 			}
 		} catch (IOException e) {
 			consoleTextArea.appendText("Exception: " + e.getMessage() + "\n");
+		}
+	}
+	
+	private void readResponse() {
+		try {
+			InputStream cm02 = serialPort.getInputStream();
+			String reponse = "";
+			byte[] response = new byte[1];
+			Thread.sleep(80);
+			while(cm02.available() != 0) {
+				cm02.read(response);
+				consoleTextArea.appendText("Byte: " + response[0] + ", Integer: " + Byte.toUnsignedInt(response[0]));
+				reponse += new String(response, "ASCII");
+				Thread.sleep(100);
+			}
+			consoleTextArea.appendText(" (" + reponse + ")\n");
 		} catch (InterruptedException e) {
 			consoleTextArea.appendText("Exception: " + e.getMessage() + "\n");
+		} catch (UnsupportedEncodingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 	}
 

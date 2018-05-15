@@ -41,6 +41,7 @@
                                           <HBox prefHeight="100.0" prefWidth="200.0" GridPane.rowIndex="2">
                                              <children>
                                                 <Button mnemonicParsing="false" onMouseClicked="#handleClearLog" text="Clear log" />
+                                                <Button mnemonicParsing="false" onMouseClicked="#handlePing" text="Ping" />
                                              </children>
                                           </HBox>
                                           <Button id="playButton" fx:id="playButton" contentDisplay="RIGHT" mnemonicParsing="false" onMouseClicked="#handleButtonPlayClicked" prefHeight="60.0" prefWidth="146.0" text="Play" GridPane.columnIndex="3" GridPane.rowSpan="2" />

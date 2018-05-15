@@ -7,6 +7,7 @@
 Servo myservo;  // create servo object to control a servo
 
 bool play = false;
+byte command = 0;
 int pos = 10;    // variable to store the servo position
 int pasAngle = 6;    // pas de l'angle
 int reading = 0; // lecture de la réponse du SRF08
@@ -15,7 +16,7 @@ int ledPin =  LED_BUILTIN; // 13
 void setup() {
   Wire.begin(8);                // join i2c bus with address #8
   Wire.onRequest(requestEvent); // register event
-  Wire.onReceive(receiveEvent);
+  Wire.onReceive(receiveEvent); // register event
   Serial.begin(9600);          // start serial communication at 9600bps
   // initialize digital pin LED_BUILTIN as an output.
   pinMode(ledPin, OUTPUT);
@@ -23,13 +24,15 @@ void setup() {
 }
 
 void loop() {
+  // range au moins une fois
+  getRange();
   // =============================
   // partie scanner, radar actif
   // =============================
   if (play) { // si radar actif alors scanner
     digitalWrite(ledPin, HIGH);   // turn the LED on (HIGH is the voltage level)
     // repart de la dernière position connue (l'indice de la boucle n'est pas réinitialisé
-    for (; pos <= 170; pos += pasAngle) { // goes from 10 degrees to 170 degrees
+    for (; pos < 170; pos += pasAngle) { // goes from 10 degrees to 170 degrees
       if (!play) { // si radar stopper alors quitter la boucle de scan
         break;
       }
@@ -43,7 +46,7 @@ void loop() {
   }
   if (play) { // si radar actif alors scanner
     digitalWrite(ledPin, LOW);
-    for (; pos >= 10; pos -= pasAngle) { // goes from 170 degrees to 10 degrees
+    for (; pos > 10; pos -= pasAngle) { // goes from 170 degrees to 10 degrees
       if (!play) { // si radar stopper alors quitter la boucle de scan
         break;
       }
@@ -82,27 +85,34 @@ void loop() {
 // function that executes whenever data is requested by master
 // this function is registered as an event, see setup()
 void requestEvent() {
+  switch (command) {
+    case 0x00:
+      play = false;
+      Wire.write(0); 
+      break;
+    case 0x01:
+      play = true;
+      Wire.write(1); 
+      break;
+    case 0x02:
+      Wire.write(reading); // retourne la dernière valeur mesurée as expected by master
+      Wire.write(pos); // retourne la dernière valeur mesurée as expected by master
+      break;
+    case 0x03:
+      Wire.write("Pong");
+      break;
+  }
   Serial.println("requestEvent");
-  Wire.write(reading); // retourne la dernière valeur mesurée as expected by master
-  Wire.write(pos); // retourne la dernière valeur mesurée as expected by master
+  Serial.println(command);
 }
 
+// function that executes whenever data is received from master
+// this function is registered as an event, see setup()
 void receiveEvent(int nbBytes) {
+  command = Wire.read();
   Serial.println("receiveEvent");
-  for (int i = 0; i < nbBytes; i++) {
-    byte octet = Wire.read();
-    Serial.println(octet);
-    switch (octet) {
-      case 0x00:
-        Serial.println("Off");
-        play = false;
-        break;
-      case 0x01:
-        Serial.println("On");
-        play = true;
-        break;
-    }
-  }
+  Serial.println(nbBytes);
+  Serial.println(command);
 }
 
 void getRange() {
@@ -111,7 +121,7 @@ void getRange() {
   // the address specified in the datasheet is 224 (0xE0)
   // but i2c adressing uses the high 7 bits so it's 112
   Wire.write(byte(0x00));      // sets register pointer to the command register (0x00)
-  Wire.write(byte(0x50));      // command sensor to measure in "inches" (0x50)
+  Wire.write(byte(0x51));      // command sensor to measure in "inches" (0x50) 
   // use 0x51 for centimeters
   // use 0x52 for ping microseconds
   Wire.endTransmission();      // stop transmitting
