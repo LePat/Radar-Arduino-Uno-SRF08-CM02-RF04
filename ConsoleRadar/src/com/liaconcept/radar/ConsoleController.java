@@ -465,16 +465,31 @@ public class ConsoleController {
 					effacerCercle.start();
 					
 					// logguer les infos
-					consoleTextArea.appendText("angle: " + angle + ", distance: " + distance + "\n");
+					Platform.runLater(new Runnable() {
+						@Override
+						public void run() {
+							consoleTextArea.appendText("angle: " + angle + ", distance: " + distance + "\n");
+						}
+					});
 					
 					// dessiner le balai
-					sonde.getTransforms().clear();
-					sonde.getTransforms().add(new Rotate(-angle, 350.0, 350.0));
+					Platform.runLater(new Runnable() {
+						@Override
+						public void run() {
+							sonde.getTransforms().clear();
+							sonde.getTransforms().add(new Rotate(-angle, 350.0, 350.0));
+						}
+					});
 					
 					// l'attente sus-citée (un premier histoire de désynchroniser)
-					Thread.sleep(200);
+					Thread.sleep(83);
 				} catch (InterruptedException e) {
-					consoleTextArea.appendText("Exception: " + e.getMessage() + "\n");
+					Platform.runLater(new Runnable() {
+						@Override
+						public void run() {
+							consoleTextArea.appendText("Exception: " + e.getMessage() + "\n");
+						}
+					});
 				}
 			}
 		}
@@ -489,6 +504,8 @@ public class ConsoleController {
 	 */
 	private class Balayage extends Thread {
 		
+		double angleCourant;
+		
 		public Balayage() {
 			super("Balayage");
 		}
@@ -497,24 +514,39 @@ public class ConsoleController {
 		public void run() {
 			while(!isRunning) {
 				try {
-					for(int i = 0; i < 160; i+=step) {
+					for(angleCourant = initialAngle; angleCourant < 170; angleCourant+=step) {
 						if (isRunning) {
 							break;
 						}
-						sonde.getTransforms().clear();
-						sonde.getTransforms().add(new Rotate(-(i + initialAngle), 350.0, 350.0));
+						Platform.runLater(new Runnable() {
+							@Override
+							public void run() {
+								sonde.getTransforms().clear();
+								sonde.getTransforms().add(new Rotate(-angleCourant, 350.0, 350.0));
+							}
+						});
 						Thread.sleep(50);
 					}
-					for(int i = 160; i > 0; i-=step) {
+					for(angleCourant = 170; angleCourant > initialAngle; angleCourant-=step) {
 						if (isRunning) {
 							break;
 						}
-						sonde.getTransforms().clear();
-						sonde.getTransforms().add(new Rotate(-(i + initialAngle), 350.0, 350.0));
+						Platform.runLater(new Runnable() {
+							@Override
+							public void run() {
+								sonde.getTransforms().clear();
+								sonde.getTransforms().add(new Rotate(-angleCourant, 350.0, 350.0));
+							}
+						});
 						Thread.sleep(50);
 					}
 				} catch (InterruptedException e) {
-					consoleTextArea.appendText(e.getMessage() + "\n");
+					Platform.runLater(new Runnable() {
+						@Override
+						public void run() {
+							consoleTextArea.appendText(e.getMessage() + "\n");
+						}
+					});
 				}
 			}
 		}
@@ -530,23 +562,34 @@ public class ConsoleController {
 	private class EffacementCercle extends Thread {
 		
 		Circle cercleAEffacer;
+		double rayonInitial;
 		double rayon;
 		
 		public EffacementCercle(Circle cercle, double rayon) {
 			super("EffacementCercle");
 			this.cercleAEffacer = cercle;
-			this.rayon = rayon;
+			this.rayonInitial = rayon;
 		}
 		
 		public void run() {
 			if (cercleAEffacer != null)  {
-				for (double i = this.rayon; i > 0; i-=0.5) {
+				for (rayon = this.rayonInitial; rayon > 0; rayon-=0.5) {
 					try {
 						Thread.sleep(100);
 					} catch (InterruptedException e) {
-						consoleTextArea.appendText(e.getMessage() + "\n");
+						Platform.runLater(new Runnable() {
+							@Override
+							public void run() {
+								consoleTextArea.appendText(e.getMessage() + "\n");
+							}
+						});
 					}
-					cercleAEffacer.setRadius(i);
+					Platform.runLater(new Runnable() {
+						@Override
+						public void run() {
+							cercleAEffacer.setRadius(rayon);
+						}
+					});
 				}
 			}
 			Platform.runLater(new Runnable() {
