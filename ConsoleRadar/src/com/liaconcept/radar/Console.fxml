@@ -46,6 +46,8 @@
                                           </HBox>
                                           <Button id="playButton" fx:id="playButton" contentDisplay="RIGHT" mnemonicParsing="false" onMouseClicked="#handleButtonPlayClicked" prefHeight="60.0" prefWidth="146.0" text="Play" GridPane.columnIndex="3" GridPane.rowSpan="2" />
                                           <Button id="connectButton" fx:id="connectButton" contentDisplay="RIGHT" mnemonicParsing="false" onMouseClicked="#handleButtonConnectClicked" prefHeight="60.0" prefWidth="146.0" text="Connect" GridPane.columnIndex="2" GridPane.rowSpan="2" />
+                                          <TextField fx:id="periodeScanText" prefHeight="25.0" prefWidth="52.0" promptText="83" text="83" GridPane.columnIndex="3" GridPane.rowIndex="2" />
+                                          <Label text="Période (ms): " GridPane.columnIndex="2" GridPane.rowIndex="2" />
                                        </children>
                                     </GridPane>
                                  </children>

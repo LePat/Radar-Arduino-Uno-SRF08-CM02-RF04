@@ -36,7 +36,6 @@ import purejavacomm.SerialPort;
 import purejavacomm.UnsupportedCommOperationException;
 
 /**
- * 
  * @author pat
  *
  */
@@ -50,7 +49,9 @@ public class ConsoleController {
 	BooleanProperty connectValue = new SimpleBooleanProperty(false);
 	@FXML Button playButton;
 	BooleanProperty playValue = new SimpleBooleanProperty(false);
-	int adressArduino = 8;
+	@FXML TextField periodeScanText;
+	int periodeScan = 83; // TODO config.ini
+	int adressArduino = 8; // TODO config.ini
 	
 	// Valeurs du radar
 	@FXML Line sonde;
@@ -133,11 +134,20 @@ public class ConsoleController {
 		playButton.setGraphic(new ImageView(new Image(getClass().getResourceAsStream("/icons/launch_16.png"))));
 		playButton.setDisable(!connectValue.getValue());
 		
+		// modification de la période de scan
+		periodeScanText.textProperty().addListener(new ChangeListener<String>() {
+			@Override
+			public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
+				consoleTextArea.appendText("Période de scan: " + newValue + "\n");
+				periodeScan = Integer.parseInt(newValue);
+			}
+		});
 
 		//========================
 		// initialize Radar Tab
 		//========================
 		// TODO un peu de souplesse ? 350 c'est dur comme valeur...
+		// TODO 80 aussi (le sleep après l'envoi d'une commande i2c)
 		diagonale1.setStartX(350.0);
 		diagonale1.setStartY(350.0);
 		diagonale1.setEndX(700.0);
@@ -482,8 +492,11 @@ public class ConsoleController {
 						}
 					});
 					
-					// l'attente sus-citée (un premier histoire de désynchroniser)
-					Thread.sleep(83);
+					// l'attente sus-citée (un premier histoire de désynchroniser (LOL))
+					// TODO paramétrer/rendre modifiable
+					// FIXME de toute manière le radar embarqué n'arrive aps à répondre à une telle fréquence sans
+					// qu'il n'y ait de collision (il se bloque) sur le bus i2c, forcément, deux maîtres et un esclave
+					Thread.sleep(periodeScan);
 				} catch (InterruptedException e) {
 					Platform.runLater(new Runnable() {
 						@Override
