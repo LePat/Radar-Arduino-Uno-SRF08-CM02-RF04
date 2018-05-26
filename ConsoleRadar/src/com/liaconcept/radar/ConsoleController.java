@@ -36,6 +36,7 @@ import purejavacomm.SerialPort;
 import purejavacomm.UnsupportedCommOperationException;
 
 /**
+ * 
  * @author pat
  *
  */
@@ -132,11 +133,11 @@ public class ConsoleController {
 		playButton.setGraphic(new ImageView(new Image(getClass().getResourceAsStream("/icons/launch_16.png"))));
 		playButton.setDisable(!connectValue.getValue());
 		
-		// bouton connected
 
 		//========================
 		// initialize Radar Tab
 		//========================
+		// TODO un peu de souplesse ? 350 c'est dur comme valeur...
 		diagonale1.setStartX(350.0);
 		diagonale1.setStartY(350.0);
 		diagonale1.setEndX(700.0);
@@ -446,7 +447,7 @@ public class ConsoleController {
 					if (angle > 180 || angle < 0 || distance > 600 || distance < 0) {
 						continue;
 					}
-					// calculer les coordonnées à l'acran
+					// calculer les coordonnées à l'écran
 					double x = distance * Math.cos(Math.toRadians(angle)) * (350 / distanceMax);
 					double y = distance * Math.sin(Math.toRadians(angle)) * (350 / distanceMax);
 					// dessiner l'impact
@@ -555,6 +556,9 @@ public class ConsoleController {
 	/**
 	 * Tâche qui est lancée après le dessin d'un "impact" radar pour l'effacer doucement dans un 
 	 * effet super joli.
+	 * 
+	 * TODO une classe dédiée serait plus propre et permettrait de regrouper le code qui dessine le cercle (qui est
+	 * dupliqué au click souris et à l'impact radar) et le thread qui l'efface progressivement
 	 * 
 	 * @author pat
 	 *

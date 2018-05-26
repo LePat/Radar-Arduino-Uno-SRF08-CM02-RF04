@@ -1,0 +1,391 @@
+<html><head>
+<meta http-equiv="content-type" content="text/html; charset=windows-1252">
+<title>CM02 Radio Communications Module</title>
+</head>
+<body>
+
+<p align="center"><b><font size="5">CM02 - Radio Communications Module</font><font size="3"><br>
+Technical Specification</font></b></p>
+<p align="left">The CM02 module, together with its companion RF04 module, form a
+complete interface between your PC and our range of I2C modules. You can send
+commands down to your robot and receive telemetry data back up to the PC. Now
+you have all the modules necessary to control your robot from your PC. The CM02
+is powered from your robots battery, which can be anything from 6v to 12v. The
+CM02 can monitor battery voltage and report this back to the PC (so your robot
+knows when its hungry!). There are four I2C connectors on the CM02, but your not
+limited to four I2C devices. In practice, you may only need one connector and
+route the I2C bus around all the modules you wish. Bit rate on the I2C bus is
+approximately 100KHz.</p>
+<p align="left"><b>License Exempt Frequency Bands<br>
+</b>The CM02 is available in two versions. The CM02/400 uses the LPRS EasyRadio
+ER400TRS module which operates at 433-4MHz. The frequency allocations between
+433-4MHz are Pan European and also extend to South Africa, Australia &amp; New
+Zealand.<br>
+The CM02/900 uses the ER900TRS module for EU (868-870MHz) or USA (902-920MHz)
+markets. Power output up to 10mW. NOTE restrictions in USA to 1mW and 5mW EU.<br>
+Be sure to order to check which type may be used in your country, and order
+matching RF04/CM02 modules, either the RF04/400 and CM02/400 or the RF04/900 and
+CM02/900.</p>
+<p align="left"><b>Power<br>
+</b>A 3pin header is used to supply the power for the CM02. A 5v regulator on
+board supplies the CM02 and other modules. The regulator can supply 1Amp, but in
+practice this is limited more by the power dissipation, which will be worse, the
+higher the battery voltage used. Just make sure the heat sink doesn't get too
+hot! Our test robot, which comprises of CM02, an MD22 motor drive, I2C LCD
+display, SP03 speech module, CMPS03 compass and eight SRF08's requires 155mA in
+operation and with a 14v supply the regulator heat sink is just detectably warm.
+(155mA for the 5v logic - the motors take a lot more, but that doesn't go
+through the regulator). The slide switch is on the battery side or the
+regulator. This doesn't switch off the motor power to the MD22. However since
+the MD22 only takes leakage current when the 5v power is off (we measured 1.5uA)
+we use it as the robot power switch. If you do that, remember to disconnect the
+battery before working on your robot. The regulator is a low drop type, so you
+can use battery voltages of 6v to 12v.
+</p>
+<p align="left"><b>Connections</b><br>
+The I2C connectors are identical and supply 0v, SCL, SDA, and 5v in that order
+from the outside edge of the PCB. Also the CM02 will require an antenna. At
+434MHz, we use a straight piece of solid wire 16.4cm in length as a whip antenna.
+At 900MHz use an 8cm whip.
+</p>
+<p align="center"><img src="CM02%20Radio%20Communications%20Module_fichiers/cm02.GIF" width="367" height="337" border="0">
+</p>
+<p align="left"><b>Commands</b><br>
+The CM02 responds to commands sent to it over the radio link from the PC. There
+are just two primary commands:&nbsp;<br>
+I2C_CMD (0x55) - This allows you to read or write as much as you wish to
+anything on the I2C bus - including our own range of modules.<br>
+CM02_CMD (0x5A) - A range of commands to the CM02 module, generally to improve
+selected communications.</p>
+<p align="left"><b>Writing directly to any I2C device</b><br>
+Following the I2C_CMD you send the device address, the devices internal register
+address you want to write to and the number of bytes you're writing.&nbsp;The
+maximum number of data bytes should not exceed 76 so as not to overflow the
+CM02's internal buffer.</p>
+<table width="100%" cellspacing="0" cellpadding="0" border="1" bgcolor="#FFFFCC">
+  <tbody><tr>
+    <td width="16%" align="right">&nbsp;</td>
+    <td width="16%" align="center">Primary CM02 command</td>
+    <td width="17%" align="center">Device Address + R/W bit</td>
+    <td width="17%" align="center">Device internal register</td>
+    <td width="17%" align="center">Number of data bytes</td>
+    <td width="17%" align="center">The data bytes</td>
+  </tr>
+  <tr>
+    <td width="16%" align="right">Byte Type</td>
+    <td width="16%" align="center">I2C_CMD</td>
+    <td width="17%" align="center">Addr+R/W</td>
+    <td width="17%" align="center">Reg</td>
+    <td width="17%" align="center">Byte Count</td>
+    <td width="17%" align="center">Data</td>
+  </tr>
+  <tr>
+    <td width="16%" align="right">Example</td>
+    <td width="16%" align="center">0x55</td>
+    <td width="17%" align="center">0xE0</td>
+    <td width="17%" align="center">0x00</td>
+    <td width="17%" align="center">0x01</td>
+    <td width="17%" align="center">0x51</td>
+  </tr>
+  <tr>
+    <td width="16%" align="right">Meaning</td>
+    <td width="16%" align="center">Primary CM02 command</td>
+    <td width="17%" align="center">SRF08 I2C address</td>
+    <td width="17%" align="center">SRF08 command Reg</td>
+    <td width="17%" align="center">One command byte follows</td>
+    <td width="17%" align="center">Start ranging in cm</td>
+  </tr>
+</tbody></table>
+<p align="left">This 5 byte sequence starts an SRF08 at address 0xE0 ranging.
+All 5 bytes should be sent to the CM02 in one sequence. A gap will result in the
+CM02 re-starting its internal command synchronization loop and ignoring the
+message. After all bytes have been received the CM02 performs the IC2 write
+operation out to the SRF08 and sends a single byte back to the PC. This returned
+byte will be 0x00 (zero) if the write command failed and non-zero if the write
+succeeded. The PC should wait for this byte to be returned (timing out after
+500mS) before proceeding with the next transaction.<br>
+Here is another write example - this time an 8 byte sequence to initialize the
+MD22 motor driver:&nbsp;</p>
+<table width="100%" cellspacing="0" cellpadding="0" border="1" bgcolor="#FFFFCC">
+  <tbody><tr>
+    <td width="12%">
+      <p align="center">I2C_CMD</p></td>
+    <td width="12%">
+      <p align="center">MD22 Addr+R/W</p></td>
+    <td width="12%">
+      <p align="center">Mode Reg</p></td>
+    <td width="12%">
+      <p align="center">Data byte count</p></td>
+    <td width="13%">
+      <p align="center">MD22 mode 1</p></td>
+    <td width="13%">
+      <p align="center">Left Motor Stopped</p></td>
+    <td width="13%">
+      <p align="center">Right Motor Stopped</p></td>
+    <td width="13%">
+      <p align="center">Fast acceleration</p></td>
+  </tr>
+  <tr>
+    <td width="12%">
+      <p align="center">0x55</p></td>
+    <td width="12%">
+      <p align="center">0xB0</p></td>
+    <td width="12%">
+      <p align="center">0x00</p></td>
+    <td width="12%">
+      <p align="center">0x04</p></td>
+    <td width="13%">
+      <p align="center">0x01</p></td>
+    <td width="13%">
+      <p align="center">0x00</p></td>
+    <td width="13%">
+      <p align="center">0x00</p></td>
+    <td width="13%">
+      <p align="center">0x02</p></td>
+  </tr>
+</tbody></table>
+<p align="left">Again the CM02 will respond with non-zero if the write succeeded
+and zero if it failed. A failure means that no acknowledge was received from the
+I2C device.</p>
+<p align="left"><b>Reading directly from any I2C device</b><br>
+This is similar to writing, except that you should add 1 to the device address
+to make it an odd number. To read from an SRF08 at address 0xE0, you would use
+0xE1 as the address. (When the address goes out on the I2C bus, its the 1 in the
+lowest bit position that indicates a read cycle is happening). The maximum
+number of data bytes requested should not exceed 76 so as not to overflow the
+CM02's internal buffer. Here is an
+example of reading the two byte bearing from the CMPS03 compass module:</p>
+<table width="100%" cellspacing="0" cellpadding="0" border="1" bgcolor="#FFFFCC">
+  <tbody><tr>
+    <td width="25%" align="center">I2C_CMD</td>
+    <td width="25%" align="center">CPMS03 I2C address + Read bit</td>
+    <td width="25%" align="center">CMPS03 bearing register</td>
+    <td width="25%" align="center">Number of bytes to read</td>
+  </tr>
+  <tr>
+    <td width="25%" align="center">0x55</td>
+    <td width="25%" align="center">0xC1</td>
+    <td width="25%" align="center">0x02</td>
+    <td width="25%" align="center">0x02</td>
+  </tr>
+</tbody></table>
+<p align="left">The CM02 will perform the read operation on the I2C bus and send
+two bytes back to the PC - high byte first. The PC should wait for both bytes to
+be returned (timing out after 500mS) before proceeding with the next
+transaction.</p>
+<p align="left"><b>CM02 Commands<br>
+</b>The CM02 command format is shown below:</p>
+<table width="100%" cellspacing="0" cellpadding="0" border="1" bgcolor="#FFFFCC">
+  <tbody><tr>
+    <td width="25%" align="center">
+CM02_CMD</td>
+    <td width="25%" align="center">CM02 Command</td>
+    <td width="25%" align="center">Data 1</td>
+    <td width="25%" align="center">Data2</td>
+  </tr>
+  <tr>
+    <td width="25%" align="center">&nbsp;0x5A</td>
+    <td width="25%" align="center">See below</td>
+    <td width="25%" align="center">Command Specific</td>
+    <td width="25%" align="center">Command Specific</td>
+  </tr>
+</tbody></table>
+<p align="left">
+The CM02 commands are always a four byte sequence. They
+start with the CM02_CMD primary command which is followed by the CM02 command
+itself. Two data bytes follow which can be any junk if not used, but they must
+be included to make up the 4 byte command sequence. These commands
+are:&nbsp;</p>
+<div align="center">
+  <center>
+  <table width="645" cellspacing="0" cellpadding="0" border="1" bgcolor="#FFFFCC">
+    <tbody><tr>
+      <td width="46" align="center">Hex</td>
+      <td width="132" align="center">
+        <p align="center">Command</p></td>
+      <td width="84" align="center">Bytes returned</td>
+      <td width="373" align="center">Purpose</td>
+    </tr>
+    <tr>
+      <td width="46" align="center">0x01</td>
+      <td width="132" align="center">REVISION&nbsp;</td>
+      <td width="84" align="center">1</td>
+      <td width="373" align="center">Returns the CM02 firmware revision number</td>
+    </tr>
+    <tr>
+      <td width="46" align="center">0x02</td>
+      <td width="132" align="center">NEW_ADDRESS</td>
+      <td width="84" align="center">1</td>
+      <td width="373" align="center">Changes SRF08 I2C address</td>
+    </tr>
+    <tr>
+      <td width="46" align="center">0x03</td>
+      <td width="132" align="center">BATTERY</td>
+      <td width="84" align="center">2</td>
+      <td width="373" align="center">High/Low bytes of battery voltage</td>
+    </tr>
+    <tr>
+      <td width="46" align="center">0x04</td>
+      <td width="132" align="center">SCAN1</td>
+      <td width="84" align="center">6</td>
+      <td width="373" align="center">Send motor data - return battery, compass
+        &amp; sonar data&nbsp;</td>
+    </tr>
+    <tr>
+      <td width="46" align="center">0x05</td>
+      <td width="132" align="center">SCAN2</td>
+      <td width="84" align="center">9</td>
+      <td width="373" align="center">Same but for 2 SRF08's</td>
+    </tr>
+    <tr>
+      <td width="46" align="center">0x06</td>
+      <td width="132" align="center">SCAN3</td>
+      <td width="84" align="center">12</td>
+      <td width="373" align="center">3 SRF08's</td>
+    </tr>
+    <tr>
+      <td width="46" align="center">0x07</td>
+      <td width="132" align="center">SCAN4</td>
+      <td width="84" align="center">15</td>
+      <td width="373" align="center">4</td>
+    </tr>
+    <tr>
+      <td width="46" align="center">0x08</td>
+      <td width="132" align="center">SCAN6</td>
+      <td width="84" align="center">21</td>
+      <td width="373" align="center">6</td>
+    </tr>
+    <tr>
+      <td width="46" align="center">0x09</td>
+      <td width="132" align="center">SCAN8</td>
+      <td width="84" align="center">27</td>
+      <td width="373" align="center">8</td>
+    </tr>
+    <tr>
+      <td width="46" align="center">0x0A</td>
+      <td width="132" align="center">SCAN12</td>
+      <td width="84" align="center">39</td>
+      <td width="373" align="center">12</td>
+    </tr>
+    <tr>
+      <td width="46" align="center">0x0B</td>
+      <td width="132" align="center">SCAN16</td>
+      <td width="84" align="center">51</td>
+      <td width="373" align="center">All 16 possible SRF08's</td>
+    </tr>
+    <tr>
+      <td width="46" align="center">&nbsp;</td>
+      <td width="132" align="center">&nbsp;</td>
+      <td width="84" align="center">&nbsp;</td>
+      <td width="373" align="center">&nbsp;</td>
+    </tr>
+  </tbody></table>
+  </center>
+</div>
+<p align="left"><b>REVISION</b> is used to read the CM02 firmware revision. It
+returns a single byte indicating the revision number. The two data bytes are
+unused and can be anything, but they must be sent.<br>
+<b>NEW_ADDRESS</b> command is used to change an SRF08's I2C address to a
+different address. The new address should be in the first of the two data bytes.
+The second data byte is unused and can be anything, but it must be sent.
+Changing the address on the SRF08 requires 4 separate transactions on the I2C
+bus. The CM02 know how to change an SRF08's I2C address and just needs you to
+send it the new address using this command. When using it, make sure you only
+have one SRF08 connected, otherwise you will set every SRF08 on the bus to the
+same address. The single return byte is the new address sent back when the task
+is complete.<br>
+<b>BATTERY</b> returns a two byte word (high byte first) indicating the battery
+voltage. This is the voltage you are supplying the CM02 with. It's a 10-bit
+number, but it is left justified so should be treated as a 16-bit number. It is
+the actually output of the A/D converter in the PIC16F88 chip used on the CM02
+module. The high byte can be used on its own and the battery voltage treated as
+a byte reading. Divide the high byte by 16.347 or the word by 4198 to get a
+direct reading of the battery voltage. (Remember you're on the PC now, and
+floating point divides are easy).<br>
+<b>SCAN</b> This command is very useful when using our modules in your robot. It
+assumes you have an MD22 motor controller, a CMPS03 compass module and a number
+of SRF08 rangefinders. SCAN1 assumes 1 SRF08, SCAN8 assumes 8 SRF08's. The two
+data bytes contain the Left and Right motor speed values for the MD22 motor
+controller. After sending the new motor speeds to the MD22, the CM02 will send a
+return frame comprising the battery voltage as a single byte. This is the same
+as the high byte of the BATTERY command above. This is followed by two bytes of
+compass bearing - high byte first, and then three bytes for each SRF08. The
+first of the three bytes is the SRF08's light sensor reading. The next two bytes
+is the range - high byte first. <br>
+For example, if the SCAN2 command is used, you would receive a 9 byte return:</p>
+<table width="100%" cellspacing="0" cellpadding="0" border="1" bgcolor="#FFFFCC">
+  <tbody><tr>
+    <td width="11%" align="center">
+      <p align="center">Battery Volts</p></td>
+    <td width="11%" align="center">
+      <p align="center">Compass bearing high byte</p></td>
+    <td width="11%" align="center">
+      <p align="center">Compass bearing low byte</p></td>
+    <td width="11%" align="center">
+      <p align="center">SRF08 at 0xE0<br>
+      Light sensor</p></td>
+    <td width="11%" align="center">
+      <p align="center">SRF08 at 0xE0<br>
+      Range high byte</p></td>
+    <td width="11%" align="center">
+      <p align="center">SRF08 at 0xE0<br>
+      Range low byte</p></td>
+    <td width="11%" align="center">SRF08 at 0xE2<br>
+      Light sensor</td>
+    <td width="11%" align="center">SRF08 at 0xE2<br>
+      Range high byte</td>
+    <td width="12%" align="center">SRF08 at 0xE2<br>
+      Range low byte</td>
+  </tr>
+</tbody></table>
+<p>SRF08 data is always returned starting with address 0xE0, 0xE2, 0xE4 - going
+up one address at a time until all requested SRF08's data has been sent.<br>
+After sending the data back up to the PC, the CM02 automatically issues a new
+ranging command to all SRF08s. The ranging command used is 82 (0x52) which returns
+the results in uS. To convert to cm divide by 58 and to convert to inches divide
+by 148.<br>
+SRF08 addresses should have been set up before running this command and the MD22
+should be initialized to the mode and acceleration required. One more important
+feature. The SCAN command also sets up a 500mS timer on the CM02. If another
+SCAN command is not received within this time, a command is automatically sent to the MD22
+to stop the motors. This is to prevent your robot wandering out
+of control if it ventures outside of the range of the radio link.&nbsp;<br>
+After initialization, our test robot is controlled entirely with a SCAN8
+command.</p>
+<p><b>LEDs</b><br>
+There are two status Leds on the CM02. A red Led indicates power is on and the
+green Led flashes briefly when a command is received over the radio link.</p>
+<p align="left"><b>RF04/CM02 Test Software<br>
+</b>To help with testing the RF04/CM02 radio link, I have put together the
+following test dialog. <a href="https://www.robot-electronics.co.uk/files/RF04_driver.exe"> Download it here</a>. It's a small Windows/PC program, and looks like this when
+you first kick it off.&nbsp;</p>
+<p align="center"><img src="CM02%20Radio%20Communications%20Module_fichiers/cm02te1.gif" width="549" height="392" border="0"></p>
+<p align="left">You should first select the com port that the RF04 has been
+instantiated to. You only
+have to set the com port once. If you have a CM02 powered up and in range, you
+will see the Firmware Revision and Battery voltage appear on screen. </p>
+<p align="center"><img src="CM02%20Radio%20Communications%20Module_fichiers/cm02te2.gif" width="549" height="392" border="0"></p>
+<p align="left">In this case Rev1 and 12.09v coming from the battery. In this
+example the CM02 is fitted to our test robot - Chucky. It has an MD22 fitted to
+drive the motors, and you will see this is firmware Rev2. The sliders controls
+the speed of the motors. There is a CMPS03 compass module fitted - Rev9 and
+showing a
+bearing of 293 degrees. An SRF08 has been found at address 0xE0. Chucky actually
+has 12 SRF08's fitted, the one shown is simply the first that was found. Chucky
+does not have an SP03 module fitted - yet, or an LCD module. If they are
+connected they will appear in the LCD02 and SP03 panels. Text can be sent to the
+SP03 or LCD02 modules by typing it into the edit box and pressing one of the
+Line/Speak buttons.</p>
+<p align="left">The Edit box in the SRF08 panel shows the currently found SRF08.
+If you change this address, the "Update" button, which is normally
+grayed out, becomes active. If you press it, a command will be sent to the CM02
+to change the SRF08's address. This is very useful if you're putting multiple
+SRF08's on your robot. Make sure you only have one SRF08 connected when you do
+this, otherwise you will reprogram every SRF08 to the new address. The display
+is live - with battery volts, compass and sonar being continuously updated.</p>
+<p align="left"><b>PCB Footprint</b></p>
+<p align="center"><img src="CM02%20Radio%20Communications%20Module_fichiers/cm02ft.GIF" width="297" height="186" border="0"></p>
+
+
+
+</body></html>

@@ -1,0 +1,108 @@
+<html><head>
+<meta http-equiv="content-type" content="text/html; charset=windows-1252">
+<title>RF04 USB Telemetry Module</title>
+</head>
+<body>
+
+
+<p align="center"><b><font size="5"><span style="background-color: #FFFF00">&nbsp;
+RF04 - USB Telemetry Module&nbsp;&nbsp;</span></font></b></p>
+
+
+<p align="center">
+<font size="3"><b> Technical Specification<br>
+Covering the RF04/400 European and RF04/900 USA/Canada modules</b></font></p>
+
+
+<p align="center"><br>
+<img src="RF04%20USB%20Telemetry%20Module_fichiers/rf04a.jpg" width="267" height="181" border="0">
+</p>
+<p align="left">The RF04 is a very easy to use radio telemetry module. The
+module is powered from the USB bus, so no external power supply or batteries are
+required. Just plug it into your PC and it will appear as a COM port. The RF04
+module can be used by anyone who can program a PC to use the COM ports.</p>
+<p align="left"><b>License Exempt Frequency Bands<br>
+</b>The RF04/400 uses the LPRS EasyRadio ER400TRS module which operates at
+433-4MHz. The frequency allocations between 433-4MHz are Pan European and also
+extend to South Africa, Australia &amp; New Zealand. <br>
+The RF04/900 uses the ER900TRS module for EU (868-870MHz) or USA (902-920MHz)
+markets. Power output up to 10mW. NOTE restrictions in USA to 1mW and 5mW EU</p>
+<p align="left"><b>First Step - Get The Drivers</b><br>
+The heart of this module is the <a href="http://www.ftdichip.com/FTProduct.htm">FTDI
+FT232BM USB chip</a> and the LPRS EasyRadio. The documentation provided by FTDI
+is very complete,
+and is not duplicated here. The serial input and output of the FT232BM connects
+directly to the EasyRadio module. Before using the RF04, you will need to
+install FTDI's Virtual COM Port ( VCP ) Drivers. These drivers appear to the
+system as an extra Com Port ( in addition to any existing hardware Com Ports ).
+Application software accesses the USB device in the same way as it would access
+a standard Windows Com Port using the Windows VCOMM API calls or by using a Com
+Port&nbsp; Library.&nbsp;Drivers are available for Windows, Apple, Linux and
+Open BSD systems directly from the <a href="http://www.ftdichip.com/">FTDI
+website</a>. You should get and install the drivers now, before you connect the
+RF04 to your computer. The Drivers page is <a href="http://www.ftdichip.com/FTDriver.htm">here</a>.&nbsp;</p>
+<p align="left"><b>Which COM port?<br>
+</b>After installing the drivers, and plugging in the RF04 module to a spare USB
+port, you will want to know which COM port it has been assigned to. This will
+vary from system to system depending on how many COM ports you currently have
+installed. To find out where it is, right click on your "My Computer"
+desktop icon and select the "Device Manager" tab. Now scroll down and
+open the "Ports (COM &amp; LPT)" tab. You should see the USB serial
+port listed - COM2 in the example below. If you want to change the COM port
+number - just right click on it, select properties, select advanced and select
+the COM port number from the available list.</p>
+<p align="left"><img src="RF04%20USB%20Telemetry%20Module_fichiers/win98.jpg" width="410" height="448" border="0"></p>
+<p align="left">&nbsp;</p>
+<p align="left"><b>What COM Port Settings?</b><br>
+The COM port should be set up for 19200 baud, 8 data bits, no parity and one
+stop bit. The following is a Visual C++ function we use to set up the serial COM
+port, together with the serial in and out functions..</p>
+<p align="left">void CBrain::SetupCommPort(void)<br>
+{<br>
+&nbsp; DCB dcb;<br>
+&nbsp; COMMTIMEOUTS ct;<br>
+<br>
+&nbsp; CloseHandle(hCom);<br>
+&nbsp; hCom = CreateFile( COM2, GENERIC_READ | GENERIC_WRITE, 0, 0, OPEN_EXISTING, 0, 0);<br>
+&nbsp; GetCommState(hCom, &amp;dcb);<br>
+&nbsp; dcb.BaudRate = CBR_19200;<br>
+&nbsp; dcb.fParity = FALSE;<br>
+&nbsp; dcb.fOutxCtsFlow = FALSE;<br>
+&nbsp; dcb.fOutxDsrFlow = FALSE;<br>
+&nbsp; dcb.fDtrControl = DTR_CONTROL_DISABLE;<br>
+&nbsp; dcb.fDsrSensitivity = FALSE;<br>
+&nbsp; dcb.fOutX = FALSE;<br>
+&nbsp; dcb.fInX = FALSE;<br>
+&nbsp; dcb.fRtsControl = RTS_CONTROL_DISABLE;<br>
+&nbsp; dcb.fAbortOnError = FALSE;<br>
+&nbsp; dcb.ByteSize = 8;<br>
+&nbsp; dcb.Parity = NOPARITY;<br>
+&nbsp; dcb.StopBits = ONESTOPBIT;<br>
+&nbsp; SetCommState(hCom, &amp;dcb);<br>
+}<br>
+<br>
+void CBrain::SerOut(BYTE sbuf)<br>
+{<br>
+&nbsp; DWORD n;<br>
+&nbsp;    WriteFile(hCom, &amp;sbuf, 1, &amp;n, NULL);<br>
+}<br>
+<br>
+BYTE CBrain::SerIn(void)<br>
+{<br>
+&nbsp; BYTE sbuf;<br>
+&nbsp; DWORD n;<br>
+&nbsp; ReadFile(hCom, &amp;sbuf, 1, &amp;n, NULL);<br>
+&nbsp; return sbuf;<br>
+}<br>
+</p>
+<p align="left"><b>RF04 Schematic</b></p>
+<p align="center"><img src="RF04%20USB%20Telemetry%20Module_fichiers/rf04sch.gif" width="1000" height="700" border="0"></p>
+<p align="left"><b>RF04 Footprint</b></p>
+<p align="center"><img src="RF04%20USB%20Telemetry%20Module_fichiers/rf04ft.gif" width="482" height="239" border="0"></p>
+<p align="left"><b>Further Information<br>
+</b>For further technical information on the USB chip, please visit the <a href="http://www.ftdichip.com/">FTDI</a>
+website.,<br>
+
+
+
+</p></body></html>
